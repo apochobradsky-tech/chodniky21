@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://chodniky21.cz/sitemap.xml
