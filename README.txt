@@ -24,3 +24,4 @@ Kořen webu je tato složka. Pro Netlify ji nahrajte nebo připojte jako publish
 
 Poznámka:
 E-mail info@chodniky21.cz je potřeba založit / nastavit jako přeposílání na Gmail.
+Deploy refresh 04.07.2026
