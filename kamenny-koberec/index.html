@@ -189,7 +189,7 @@
           <a href="mailto:info@chodniky21.cz">info@chodniky21.cz</a>
         </div>
       </div>
-      <form class="form" name="poptavka-kamenny-koberec" action="https://formsubmit.co/info@chodniky21.cz" method="POST" enctype="multipart/form-data" target="_blank" rel="noopener">
+      <form class="form" name="poptavka-kamenny-koberec" method="POST" enctype="multipart/form-data" data-mailto-form>
         <input type="hidden" name="_subject" value="Nová poptávka na kamenný koberec z Chodníky21.cz">
         <input type="hidden" name="_template" value="table">
         <input type="hidden" name="_captcha" value="false">
@@ -236,6 +236,63 @@
     <a class="btn btn-primary" href="#poptavka">Chci kamenný koberec</a>
   </div>
 
+  <script>
+  (function () {
+    const forms = document.querySelectorAll('form[data-mailto-form]');
+    if (!forms.length) return;
+
+    forms.forEach(function (form) {
+      form.removeAttribute('action');
+      form.removeAttribute('target');
+      form.removeAttribute('rel');
+      form.setAttribute('method', 'post');
+
+      const submit = form.querySelector('button[type="submit"], input[type="submit"]');
+      if (submit && submit.parentNode && !form.querySelector('.form-mailto-note')) {
+        const info = document.createElement('p');
+        info.className = 'form-help form-mailto-note';
+        info.textContent = 'Poptávka se odešle přes váš e-mail. Fotku můžete přiložit přímo do otevřeného e-mailu.';
+        submit.parentNode.insertBefore(info, submit);
+
+        const fallback = document.createElement('p');
+        fallback.className = 'form-help form-mailto-fallback';
+        fallback.textContent = 'Když se e-mail neotevře, napište nám přímo na info@chodniky21.cz.';
+        submit.parentNode.insertBefore(fallback, submit.nextSibling);
+      }
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const data = new FormData(form);
+        const lines = [];
+
+        for (const [key, value] of data.entries()) {
+          if (key.startsWith('_')) continue;
+
+          if (value instanceof File) {
+            if (value.name) {
+              lines.push(key + ': ' + value.name + ' — fotku prosím přiložte do tohoto e-mailu ručně.');
+            }
+            continue;
+          }
+
+          const text = String(value || '').trim();
+          if (text) {
+            lines.push(key + ': ' + text);
+          }
+        }
+
+        lines.push('');
+        lines.push('Odesláno z webu chodniky21.cz');
+
+        const subject = encodeURIComponent('Poptávka z webu Chodníky21');
+        const body = encodeURIComponent(lines.join('\n'));
+
+        window.location.href = 'mailto:info@chodniky21.cz?subject=' + subject + '&body=' + body;
+      });
+    });
+  })();
+  </script>
   <script src="../assets/js/main.js"></script>
 </body>
 </html>
