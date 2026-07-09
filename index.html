@@ -458,6 +458,29 @@
     const forms = document.querySelectorAll('form[data-formspree-form]');
     if (!forms.length) return;
 
+    function buildFormData(form) {
+      const source = new FormData(form);
+      const data = new FormData();
+      const selectedFiles = [];
+
+      for (const [key, value] of source.entries()) {
+        if (value instanceof File) {
+          if (value.name) {
+            selectedFiles.push(value.name);
+          }
+          continue;
+        }
+
+        data.append(key, value);
+      }
+
+      if (selectedFiles.length) {
+        data.append('Fotky', 'Zákazník vybral fotku: ' + selectedFiles.join(', ') + '. Fotku si prosím vyžádejte odpovědí nebo po telefonu.');
+      }
+
+      return data;
+    }
+
     forms.forEach(function (form) {
       form.setAttribute('action', endpoint);
       form.setAttribute('method', 'post');
@@ -488,7 +511,7 @@
 
         fetch(endpoint, {
           method: 'POST',
-          body: new FormData(form),
+          body: buildFormData(form),
           headers: {
             Accept: 'application/json'
           }
