@@ -350,7 +350,7 @@
           <a href="mailto:info@chodniky21.cz">info@chodniky21.cz</a>
         </div>
       </div>
-      <form class="form" name="poptavka" method="POST" enctype="multipart/form-data" data-mailto-form>
+      <form class="form" name="poptavka" action="https://formspree.io/f/xaqggron" method="POST" enctype="multipart/form-data" data-formspree-form>
         <input type="hidden" name="_subject" value="Nová poptávka z Chodníky21.cz">
         <input type="hidden" name="_template" value="table">
         <input type="hidden" name="_captcha" value="false">
@@ -453,57 +453,59 @@
 
   <script>
   (function () {
-    const forms = document.querySelectorAll('form[data-mailto-form]');
+    const endpoint = 'https://formspree.io/f/xaqggron';
+    const errorText = 'Poptávku se nepodařilo odeslat. Zavolejte prosím 728 534 544 nebo napište na info@chodniky21.cz.';
+    const forms = document.querySelectorAll('form[data-formspree-form]');
     if (!forms.length) return;
 
     forms.forEach(function (form) {
-      form.removeAttribute('action');
-      form.removeAttribute('target');
-      form.removeAttribute('rel');
+      form.setAttribute('action', endpoint);
       form.setAttribute('method', 'post');
+      form.setAttribute('enctype', 'multipart/form-data');
 
       const submit = form.querySelector('button[type="submit"], input[type="submit"]');
-      if (submit && submit.parentNode && !form.querySelector('.form-mailto-note')) {
-        const info = document.createElement('p');
-        info.className = 'form-help form-mailto-note';
-        info.textContent = 'Poptávka se odešle přes váš e-mail. Fotku můžete přiložit přímo do otevřeného e-mailu.';
-        submit.parentNode.insertBefore(info, submit);
+      const status = document.createElement('p');
+      status.className = 'form-status';
+      status.setAttribute('role', 'alert');
+      status.hidden = true;
 
-        const fallback = document.createElement('p');
-        fallback.className = 'form-help form-mailto-fallback';
-        fallback.textContent = 'Když se e-mail neotevře, napište nám přímo na info@chodniky21.cz.';
-        submit.parentNode.insertBefore(fallback, submit.nextSibling);
+      if (submit && submit.parentNode) {
+        submit.parentNode.insertBefore(status, submit.nextSibling);
+      } else {
+        form.appendChild(status);
       }
 
       form.addEventListener('submit', function (event) {
         event.preventDefault();
+        status.hidden = true;
+        status.textContent = '';
 
-        const data = new FormData(form);
-        const lines = [];
-
-        for (const [key, value] of data.entries()) {
-          if (key.startsWith('_')) continue;
-
-          if (value instanceof File) {
-            if (value.name) {
-              lines.push(key + ': ' + value.name + ' — fotku prosím přiložte do tohoto e-mailu ručně.');
-            }
-            continue;
-          }
-
-          const text = String(value || '').trim();
-          if (text) {
-            lines.push(key + ': ' + text);
-          }
+        if (submit) {
+          submit.disabled = true;
+          submit.dataset.originalText = submit.textContent;
+          submit.textContent = 'Odesílám...';
         }
 
-        lines.push('');
-        lines.push('Odesláno z webu chodniky21.cz');
-
-        const subject = encodeURIComponent('Poptávka z webu Chodníky21');
-        const body = encodeURIComponent(lines.join('\n'));
-
-        window.location.href = 'mailto:info@chodniky21.cz?subject=' + subject + '&body=' + body;
+        fetch(endpoint, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: {
+            Accept: 'application/json'
+          }
+        }).then(function (response) {
+          if (response.ok) {
+            window.location.href = '/dekujeme/';
+            return;
+          }
+          throw new Error('Formspree error');
+        }).catch(function () {
+          status.textContent = errorText;
+          status.hidden = false;
+          if (submit) {
+            submit.disabled = false;
+            submit.textContent = submit.dataset.originalText || 'Odeslat';
+          }
+        });
       });
     });
   })();
